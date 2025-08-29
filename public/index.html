@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flavor-Table</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <header id="main-header">
+      <nav id="navbar">
+        <h1 id="brand">Flavor Table</h1>
+        <ul id="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="./favorites.html">Favorites</a></li>
+          <li><a href="./randomRecipes.html">Random Page</a></li>
+        </ul>
+      </nav>
+
+      <div id="hero">
+        <h2>Find Recipes by Ingredients</h2>
+        <p>Discover meals with what you already have in your kitchen!</p>
+      </div>
+    </header>
+
+    <main id="content">
+      <section id="intro">
+        <h3>Welcome to Flavor Table</h3>
+        <p>
+          Try <strong>/recipes/random</strong> or
+          <strong>/recipes/search?ingredients=tomato,cheese</strong>
+          to see raw JSON from the backend — or use the search below 👇
+        </p>
+      </section>
+
+      <!-- Search by Ingredients -->
+      <section id="search">
+        <h3>Search Recipes by Ingredients</h3>
+        <form id="search-form" autocomplete="off">
+          <label for="ingredients-input">Ingredients (comma-separated)</label>
+          <input
+            id="ingredients-input"
+            name="ingredients"
+            type="text"
+            placeholder="e.g., chicken, rice, tomato"
+            required
+          />
+          <button id="search-btn" type="submit">Search</button>
+        </form>
+
+        <div id="status" role="status" aria-live="polite"></div>
+        <div id="results"></div>
+      </section>
+    </main>
+
+    <footer id="footer">
+      <div id="footer-content">
+        <p>
+          <strong>Flavor Table</strong> – Your recipe finder powered by
+          Spoonacular API.
+        </p>
+        <p>Made with ❤️ by Saif Al Kurdi, 2025.</p>
+        <nav id="footer-nav">
+          <a href="/">Home</a> | <a href="./randomRecipes.html">Random</a> |
+          <a href="./favorites.html">Favorites
+        </nav>
+        <p id="copyright">&copy; 2025 Flavor Table. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>
