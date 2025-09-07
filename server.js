@@ -1,19 +1,25 @@
-const express = require("express");
-const cors = require("cors");
 require("dotenv").config();
+const express = require("express");
 const path = require("path");
+const cors = require("cors");
+const { Pool } = require("pg");
 
 const homeRouter = require("./routes/home");
-const recipesRouter = require("./routes/recipes");
+const recipesRouter = require("./routes/Recipes");
+const apiRecipesRouter = require("./routes/api/recipes");
 
 // app
 const app = express();
 
-// API keys check
+// Warnings for missing env vars
 if (!process.env.SPOONACULAR_API_KEY) {
   console.warn(
     "⚠️  SPOONACULAR_API_KEY is not set. /recipes routes will fail."
   );
+}
+
+if (!process.env.DATABASE_URL) {
+  console.warn("⚠️  DATABASE_URL is not set. DB-backed features will fail.");
 }
 
 // middleware
@@ -23,9 +29,17 @@ app.use(express.json());
 // static files
 app.use(express.static(path.join(__dirname, "./public")));
 
+// PostgreSQL connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+app.locals.db = pool;
+
 // routes
 app.use("/", homeRouter);
 app.use("/recipes", recipesRouter);
+app.use("/api/recipes", apiRecipesRouter);
 
 // 404 for unknown routes
 app.use((req, res) => {
@@ -46,6 +60,18 @@ app.use((err, req, res, next) => {
 // port
 const PORT = process.env.PORT || 5000;
 // server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+async function start() {
+  try {
+    await app.locals.db.query("SELECT 1"); // triggers a real connection
+    console.log("✅ Connected to PostgreSQL");
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ PostgreSQL connection failed:", err.message);
+    process.exit(1); // stop here so you don’t run a server without DB
+  }
+}
+
+start();

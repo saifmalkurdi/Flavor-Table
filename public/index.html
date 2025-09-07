@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flavor-Table</title>
     <link rel="stylesheet" href="./styles.css" />
-    <script src="./app.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="module" src="./app.js" defer></script>
   </head>
   <body>
     <header id="main-header">
@@ -26,11 +27,11 @@
 
     <main id="content">
       <section id="intro">
-        <h3>Welcome to Flavor Table</h3>
+        <h3>Discover Recipes Instantly</h3>
         <p>
-          Try <strong>/recipes/random</strong> or
-          <strong>/recipes/search?ingredients=tomato,cheese</strong>
-          to see raw JSON from the backend — or use the search below 👇
+          Simply type the ingredients you have at home, and Flavor Table will
+          suggest tasty recipes you can make right now. Save your favorites for
+          later or explore a random recipe for inspiration!
         </p>
       </section>
 
@@ -63,7 +64,7 @@
         <p>Made with ❤️ by Saif Al Kurdi, 2025.</p>
         <nav id="footer-nav">
           <a href="/">Home</a> | <a href="./randomRecipes.html">Random</a> |
-          <a href="./favorites.html">Favorites
+          <a href="./favorites.html">Favorites</a>
         </nav>
         <p id="copyright">&copy; 2025 Flavor Table. All rights reserved.</p>
       </div>

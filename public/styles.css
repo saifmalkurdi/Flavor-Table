@@ -37,6 +37,53 @@ body {
   line-height: 1.5;
 }
 
+/* ===== Modal Form Styling ===== */
+.modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal label {
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal input,
+.modal textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.modal textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modal .form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.modal .form-actions button,
+.modal .form-actions .button-like {
+  flex: 1;
+}
+
 /* ---------- Modal (flexbox) ---------- */
 .modal-backdrop {
   position: fixed;
@@ -245,7 +292,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Status lines */
+/* ==== Status lines ===== */
 #status,
 #random-status,
 #favorites-status {
@@ -367,16 +414,3 @@ button:disabled {
     height: 180px;
   }
 }
-/* background: linear-gradient(rgba(24, 16, 10, 0.55), rgba(24, 16, 10, 0.55)),
-    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2000&auto=format&fit=crop")
-      center/cover no-repeat; */
-
-/* font-size: clamp(20px, 2.8vw, 28px) */
-
-/* backdrop-filter: saturate(160%) blur(2px); */
-
-/* flex: 1 1 100%; */
-
-/* align-self: flex-start; */
-
-/* inset: 0; */
