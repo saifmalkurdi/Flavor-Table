@@ -1,4 +1,5 @@
-import { apiCreateFavorite } from "../database_CRUD/api.js";
+import { apiCreateFavorite } from "../DB/api.js";
+import { ensureLoggedIn } from "../auth.js";
 
 function ensureModal() {
   let backdrop = document.getElementById("modal-backdrop");
@@ -37,7 +38,7 @@ export function openModal() {
 }
 
 export function closeModal() {
-  const backdrop = document.getElementById("modal-backdrop");
+  const { backdrop } = ensureModal();
   if (backdrop) backdrop.style.display = "none";
   document.body.style.overflow = "";
 }
@@ -81,6 +82,7 @@ export function showDetailsModal({
   saveBtn.type = "button";
   saveBtn.textContent = "Save to Favorites";
   saveBtn.addEventListener("click", async () => {
+    if (!ensureLoggedIn()) return;
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving…";
     try {

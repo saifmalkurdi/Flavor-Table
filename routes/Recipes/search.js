@@ -20,7 +20,7 @@ router.get("/", async (req, res, next) => {
     //sanitize
     const ingredients = String(raw)
       .split(",")
-      .map((i) => i.trim().toLocaleLowerCase())
+      .map((i) => i.trim().toLowerCase())
       .filter(Boolean)
       .join(",");
 
@@ -31,11 +31,7 @@ router.get("/", async (req, res, next) => {
 
     // get recipes
     const { data } = await axios.get(`${BASE_URL}/recipes/findByIngredients`, {
-      params: {
-        apiKey: API_KEY,
-        ingredients,
-        number,
-      },
+      params: { apiKey: API_KEY, ingredients, number },
     });
 
     // return recipes

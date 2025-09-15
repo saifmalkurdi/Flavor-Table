@@ -1,15 +1,15 @@
 # Flavor Table
 
-A tiny full-stack app that lets you **find recipes by ingredients**, get a **random recipe**, save **favorites** to a **Postgres database**, and (bonus) view a **recipe details** modal.  
-The backend proxies the Spoonacular API so the API key stays private.
+A tiny full-stack app that lets you **find recipes by ingredients**, get a **random recipe**, save **favorites** to a **PostgreSQL** database, and view **recipe details** in a modal.  
+The backend proxies the Spoonacular API so your key stays private, and includes a simple **JWT auth** system (register/login, profile, change password).
 
 ---
 
 ## Tech Stack
 
-- **Backend:** Node.js, Express, Axios, dotenv, pg
+- **Backend:** Node.js, Express, Axios, dotenv, pg, bcrypt, jsonwebtoken
 - **Frontend:** Vanilla HTML/CSS/JS (Flexbox only), Google Fonts
-- **Database:** PostgreSQL (stores favorites as rows)
+- **Database:** PostgreSQL (local or Render managed)
 - **Data Source:** Spoonacular API
 
 ---
@@ -19,43 +19,51 @@ The backend proxies the Spoonacular API so the API key stays private.
 ```
 Flavor-Table/
 ├─ public/
-│  ├─ index.html                 # Main page (search UI)
-│  ├─ favorites.html             # Favorites page (reads from DB)
+│  ├─ index.html                 # Home (auth widgets + ingredients search UI)
+│  ├─ favorites.html             # Favorites page (DB-backed)
 │  ├─ randomRecipes.html         # Random recipe page
-│  ├─ styles.css                 # Flexbox styling (sticky nav, bottom footer)
-│  ├─ app.js                     # Main entry (imports modular files)
-│  ├─ database_CRUD/
+│  ├─ styles.css                 # Flexbox styling (fixed nav, bottom footer)
+│  ├─ app.js                     # Frontend entry (boots modules)
+│  ├─ auth.js                    # Login/register/logout + token helpers
+│  ├─ DB/
 │  │  └─ api.js                  # Frontend API calls to backend CRUD
 │  ├─ modal_UI/
 │  │  └─ modal.js                # Modal logic (details + edit form)
-│  └─ recipes/                   # Feature modules
-│     ├─ showRecipeDetail.js     # Fetch details + open modal
-│     └─ showRandomRecipe.js     # Random page boot/render
+│  └─ recipes/
+│     ├─ searchRandomRecipe.js   # Search by ingredients
+│     ├─ showFavorites.js        # Favorites page renderer
+│     ├─ showRandomRecipe.js     # Random page boot/render
+│     └─ showRecipeDetail.js     # Fetch details + open modal
 ├─ routes/
-│  ├─ home.js                    # Serves index.html
+│  ├─ home.js
+│  ├─ Recipes/
+│  │  ├─ index.js
+│  │  ├─ random.js
+│  │  ├─ search.js
+│  │  └─ details.js
 │  └─ api/
-│     └─ recipes.js              # /api/recipes CRUD routes (DB)
-├─ routes/Recipes/               # Proxy to Spoonacular for UI data
-│  ├─ index.js                   # mounts /random, /search, /:id
-│  ├─ random.js                  # GET /recipes/random
-│  ├─ search.js                  # GET /recipes/search
-│  └─ details.js                 # GET /recipes/:id
-├─ server.js                     # Express app bootstrap & middleware
-├─ .env                          # DB creds, Spoonacular key, PORT, etc.
-├─ .env.example                  # Example env file
+│     ├─ recipes.js
+│     ├─ auth.js
+│     └─ users.js
+├─ middleware/
+│  └─ verifyToken.js
+├─ server.js
+├─ .env                          # Secrets (not committed)
+├─ .env.example
 ├─ package.json
 └─ README.md
 ```
 
 ---
 
-## Getting Started
+## Getting Started (Local)
 
 ### 1) Prerequisites
 
 - Node.js **18+**
 - PostgreSQL **14+**
-- A Spoonacular API key (free plan is fine for development)
+- Spoonacular API key
+- **pgAdmin 4** (GUI for PostgreSQL)
 
 ### 2) Install
 
@@ -65,183 +73,185 @@ npm install
 
 ### 3) Environment
 
-Create a `.env` file in the project root:
+Create `.env` in the project root (values are examples):
 
-```bash
+```dotenv
+# Server
 PORT=3000
 
 # Spoonacular
 SPOONACULAR_API_KEY=YOUR_KEY_HERE
-SPOONACULAR_BASE_URL=https://api.spoonacular.com
+BASE_URL=https://api.spoonacular.com
 
-# Database
-DATABASE_URL=postgres://user:password@localhost:5432/flavor_table
+# Database (LOCAL EXAMPLE — adjust port if your local Postgres uses 5433)
+DATABASE_URL=postgresql://user:password@localhost:5432/flavor_table
+
+# Auth
+JWT_SECRET=change_me
+JWT_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
 ```
 
-Provide an example file too:
+> ⚠️ Never commit your real `.env`. Provide a `.env.example` with placeholders.
 
-```dotenv
-# .env.example
-PORT=3000
-SPOONACULAR_API_KEY=CHANGE_ME
-SPOONACULAR_BASE_URL=https://api.spoonacular.com
-DATABASE_URL=postgres://user:password@localhost:5432/flavor_table
+### 4) Create Tables with pgAdmin (Local)
+
+1. Open **pgAdmin 4** → connect to your **local** server.
+2. Create a database named **`flavor_table`** (if not already created).
+3. Right-click the database → **Query Tool** → paste the **Schema SQL** below → **Execute** (►).
+4. You should now see `users` and `recipes` tables under **Schemas → public → Tables**.
+
+**Schema SQL (copy into pgAdmin):**
+
+```sql
+-- Users
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email    TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+-- Recipes (favorites)
+CREATE TABLE IF NOT EXISTS recipes (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  image TEXT,
+  instructions TEXT,
+  ingredients JSONB NOT NULL DEFAULT '[]'::jsonb,
+  readyin INTEGER
+);
+
+-- Unique (case-insensitive) recipe titles
+CREATE UNIQUE INDEX IF NOT EXISTS recipes_title_unique_idx
+ON recipes (LOWER(title));
 ```
 
-> ⚠️ Never commit your real `.env`.
-
-### 4) Run
+### 5) Run the server
 
 ```bash
-# dev (if nodemon is set up)
-npm run dev
-
-# or plain node
+npm run dev   # if you use nodemon
+# or
 node server.js
 ```
 
-Open: <http://localhost:3000>
+Open <http://localhost:3000>
 
 ---
 
-## Server Routes
+## Deployment (Render.com — Free)
 
-### Proxy (public UI) endpoints — prefix: `/recipes`
+### A) Create a managed PostgreSQL (free tier)
 
-- `GET /recipes/random` → one random recipe (simplified)
-- `GET /recipes/search?ingredients=tomato,cheese&limit=12` → array of matches
-- `GET /recipes/:id` → details (summary text, image, readyInMinutes)
+1. Render Dashboard → **New → PostgreSQL**.
+2. Choose region.
+3. Plan: **Free**.
+4. After it provisions, open the DB page and note:
+   - **Internal Database URL** → used by the **web service** (no SSL).
+   - **External Database URL** → used by **pgAdmin** on your laptop (requires SSL).
 
-**Examples**
+### B) Create the Web Service
 
-`GET /recipes/random`
+1. **New → Web Service** → connect your GitHub repo.
+2. **Branch**: main (or your choice).
+3. **Environment**: `Node`.
+4. **Build Command**: `npm ci` (or `npm install`)
+5. **Start Command**: `node server.js`
+6. **Instance type**: Free.
+7. **Region**: **Same as your database**.
 
-```json
-{
-  "id": 716429,
-  "title": "Pasta with Garlic",
-  "image": "https://...",
-  "instructions": "Step 1 ... Step 2 ...",
-  "ingredients": ["pasta", "garlic", "olive oil"]
-}
+### C) Env Vars (on the Web Service)
+
+```
+# Render injects PORT; your server reads it
+PORT=10000
+
+# App secrets
+SPOONACULAR_API_KEY=YOUR_KEY
+BASE_URL=https://api.spoonacular.com
+JWT_SECRET=<long_random_string>
+JWT_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
+
+# Use the DB **Internal** URL here
+DATABASE_URL=<PASTE INTERNAL DATABASE URL>
+NODE_ENV=production
 ```
 
-`GET /recipes/search?ingredients=tomato,cheese&limit=12`
+### D) Create Tables on the Render DB using pgAdmin
 
-```json
-[
-  {
-    "id": 632660,
-    "title": "Tomato & Cheese Tart",
-    "image": "https://...",
-    "usedIngredients": ["tomato", "cheese"],
-    "missedIngredients": ["basil"]
-  }
-]
-```
+1. In Render DB page, copy the **External Database URL** (contains host, db, user, password).
+2. Open **pgAdmin → Add New Server**:
+   - **General → Name:** `Render-Flavor-Table`
+   - **Connection:** Host/DB/User/Password from the External URL, **Port:** 5432
+   - **SSL:** Mode = **require** (leave certificates empty)
+3. Connect → select the Render database → **Query Tool** → paste the **Schema SQL** (same as above) → **Execute**.
+4. Verify `users` and `recipes` tables are created under **Schemas → public → Tables**.
 
-`GET /recipes/:id`
+> After the tables exist, your deployed app can read/write favorites immediately.
 
-```json
-{
-  "id": 632660,
-  "title": "Tomato & Cheese Tart",
-  "image": "https://...",
-  "summary": "Text-only summary (HTML stripped)…",
-  "readyInMinutes": 35
-}
-```
+### E) Test your Render app
 
-> The server sanitizes queries (trim/lowercase) and clamps `limit` to a safe range.
+Open your Render URL (e.g., `https://flavor-table.onrender.com`) and try:
+
+- `/` (Home)
+- `/favorites.html`
+- `/randomRecipes.html`
+- `/recipes/random` (JSON health check)
+
+> Free tier sleeps; the first request after idle will be slower (“cold start”).
 
 ---
 
-### DB CRUD endpoints — prefix: `/api/recipes`
+## API Overview
 
-- `GET /api/recipes` → all favorites
-- `POST /api/recipes` → create a favorite  
-  Body (example):
+### UI Proxy — `/recipes`
 
-  ```json
-  {
-    "title": "Caprese Pasta",
-    "image": "https://...",
-    "instructions": "",
-    "ingredients": ["pasta", "tomato", "mozzarella", "basil"],
-    "readyIn": 20
-  }
-  ```
+- `GET /recipes/random`
+- `GET /recipes/search?ingredients=tomato,cheese&limit=12`
+- `GET /recipes/:id`
 
-  - On duplicate title (case-insensitive), returns **409 Conflict**:
-    ```json
-    { "status": "fail", "message": "This recipe is already in your favorites." }
-    ```
+### Auth — `/api/auth`
 
-- `PUT /api/recipes/:id` → update a favorite (same shape as POST)
+- `POST /api/auth/register` → `{ username, email, password }`
+- `POST /api/auth/login` → `{ username, password }`
 
-  - On duplicate title, returns **409 Conflict**.
+### Users — `/api/users` (JWT)
 
-- `DELETE /api/recipes/:id` → remove a favorite
+- `GET /api/users/profile`
+- `PUT /api/users/profile`
+- `PUT /api/users/password`
 
-> API always returns `readyIn` (camelCase) in JSON, even though the DB column is `readyin` (snake).
+### Favorites — `/api/recipes` (JWT for write)
 
----
+- `GET /api/recipes`
+- `POST /api/recipes`
+- `PUT /api/recipes/:id`
+- `DELETE /api/recipes/:id`
 
-## Frontend Features
-
-### Search by Ingredients (Home)
-
-- Enter ingredients like `chicken, rice, tomato`
-- Each card shows:
-  - **Image** & **Title**
-  - **Used** vs **Missing** ingredients
-  - **Save to Favorites** → DB (handles duplicates gracefully)
-  - **View Details** → opens modal populated via `/recipes/:id`
-
-### Random Recipe Page
-
-- Button triggers `/recipes/random`
-- Displays:
-  - Title, image
-  - Steps (split into readable list)
-  - Ingredients list
-- **Save** and **View Details** buttons included
-
-### Favorites Page
-
-- Reads from DB (`/api/recipes`)
-- Renders saved recipes with:
-  - **Edit** (modal form) → updates title/image/ingredients/readyIn
-  - **Delete** → removes from DB and refreshes list
+> `POST/PUT/DELETE` require `Authorization: Bearer <token>`.
 
 ---
 
 ## Styling
 
 - **Flexbox-only** layout (no grid)
-- **Sticky navbar** with blurred hero background
+- **Fixed, visible navbar** with media-query responsiveness (no JS)
 - **Footer pinned** to the bottom via flex column layout
-- Warm, restaurant-style palette (pumpkin/orange + basil green)
-- Google Font: **Inter**
+- Warm palette (pumpkin/orange + basil green); **Inter** font
+- Buttons + focus rings use **brand** color
 
 ---
 
-## Error Handling
+## Troubleshooting
 
-- **Backend**
-  - Missing API key or DB connection → 500 JSON:
-    ```json
-    { "status": "error", "message": "Internal Server Error" }
-    ```
-    (Actual propagated messages are included when available.)
-  - Unique constraint violation → **409** JSON:
-    ```json
-    { "status": "fail", "message": "This recipe is already in your favorites." }
-    ```
-- **Frontend**
-  - Each fetch/axios call checks status and shows human-friendly text in
-    `#status`, `#random-status`, `#favorites-status`.
-  - On duplicate save, buttons show **“Already saved ✓”** and may also `alert(...)`.
+- **401 on favorites** → Log in first and send `Authorization: Bearer <token>`.
+- **Database connection error (Render)** →
+  - Web service and DB must be in the **same region**.
+  - Web service `DATABASE_URL` must be the **Internal URL**.
+- **pgAdmin connection fails (Render)** → Use the **External URL** and set **SSL Mode: require**.
+- **409 on save** → recipe title already exists (case-insensitive). Edit or delete the duplicate.
 
 ---
 
@@ -258,18 +268,11 @@ Open: <http://localhost:3000>
 
 ---
 
-## Notes
-
-- Spoonacular’s free tier has daily quotas. During development, keep `limit` small and avoid auto-fetch loops.
-- All external calls are **browser → Express → Spoonacular**, so the API key stays secret.
-- Favorites are **unique by title (case-insensitive)** by default; adjust the index if you prefer a different rule.
-
----
-
 ## Credits
 
 - Data: **Spoonacular API**
 - Hero photo: **Unsplash**
+- UI/Code: **Saif Al Kurdi**
 
 ---
 
@@ -280,7 +283,7 @@ Open: <http://localhost:3000>
 ~10 hours total:
 
 - ~3h backend routes + DB CRUD
-- ~2h Postgres setup + migrations
+- ~2h Postgres setup + migrations (pgAdmin)
 - ~2h modular frontend refactor
 - ~2h styling & modal polish
 - ~1h debugging duplicates & README

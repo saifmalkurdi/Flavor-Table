@@ -1,7 +1,7 @@
 // public/recipes/showRandomRecipe.js
-import { apiCreateFavorite } from "../database_CRUD/api.js";
+import { apiCreateFavorite } from "../DB/api.js";
 import { showRecipeDetails } from "./showRecipeDetail.js";
-
+import { ensureLoggedIn } from "../auth.js";
 export function showRandomRecipe() {
   const randomBtn = document.getElementById("random-btn");
   const randomStatusEl = document.getElementById("random-status");
@@ -85,6 +85,7 @@ export function showRandomRecipe() {
     btn.type = "button";
     btn.textContent = "Save to Favorites";
     btn.addEventListener("click", async () => {
+      if (!ensureLoggedIn()) return;
       btn.disabled = true;
       btn.textContent = "Saving…";
       try {
