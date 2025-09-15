@@ -2,14 +2,15 @@ import {
   apiListFavorites,
   apiUpdateFavorite,
   apiDeleteFavorite,
-} from "../database_CRUD/api.js";
+} from "../DB/api.js";
 import { showEditForm } from "../modal_UI/modal.js";
+import { ensureLoggedIn, isLoggedIn } from "../auth.js";
 
 export function bootFavorites() {
   const favListEl = document.getElementById("favorites-list");
   const favStatusEl = document.getElementById("favorites-status");
 
-  if (!favListEl || !favStatusEl) return; // not on the Favorites page
+  if (!favListEl || !favStatusEl) return;
 
   const setFavStatus = (msg) => {
     favStatusEl.textContent = msg || "";
@@ -50,12 +51,13 @@ export function bootFavorites() {
     const editBtn = document.createElement("button");
     editBtn.type = "button";
     editBtn.textContent = "Edit";
-    editBtn.addEventListener("click", () =>
+    editBtn.addEventListener("click", () => {
+      if (!ensureLoggedIn()) return;
       showEditForm(item, async (payload) => {
         await apiUpdateFavorite(item.id, payload);
-        await renderFavorites(); // refresh
-      })
-    );
+        await renderFavorites();
+      });
+    });
     card.appendChild(editBtn);
 
     // Delete
@@ -63,6 +65,7 @@ export function bootFavorites() {
     removeBtn.type = "button";
     removeBtn.textContent = "Delete";
     removeBtn.addEventListener("click", async () => {
+      if (!ensureLoggedIn()) return;
       removeBtn.disabled = true;
       try {
         await apiDeleteFavorite(item.id);
@@ -80,21 +83,25 @@ export function bootFavorites() {
   async function renderFavorites() {
     favListEl.innerHTML = "";
     setFavStatus("Loading…");
-
     try {
+      if (!isLoggedIn()) {
+        setFavStatus("Please log in to manage favorites.");
+        return;
+      }
       const list = await apiListFavorites();
-
       if (!list.length) {
         setFavStatus(
           "No favorites yet. Save some recipes from Search or Random."
         );
         return;
       }
-
       setFavStatus(`You have ${list.length} favorite(s).`);
       list.forEach((it) => favListEl.appendChild(renderFavoriteItemDB(it)));
     } catch (e) {
-      console.error(e);
+      if (e?.response?.status === 401) {
+        setFavStatus("Please log in to manage favorites.");
+        return;
+      }
       setFavStatus(e.message || "Failed to load favorites.");
     }
   }

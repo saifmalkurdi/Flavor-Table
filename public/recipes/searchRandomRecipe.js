@@ -1,5 +1,6 @@
-import { apiCreateFavorite } from "../database_CRUD/api.js";
+import { apiCreateFavorite } from "../DB/api.js";
 import { showRecipeDetails } from "./showRecipeDetail.js";
+import { ensureLoggedIn } from "../auth.js";
 
 export function bootSearch() {
   const searchForm = document.getElementById("search-form");
@@ -70,6 +71,7 @@ export function bootSearch() {
     btn.type = "button";
     btn.textContent = "Save to Favorites";
     btn.addEventListener("click", async () => {
+      if (!ensureLoggedIn()) return;
       btn.disabled = true;
       btn.textContent = "Saving…";
       try {
@@ -123,7 +125,6 @@ export function bootSearch() {
 
     try {
       const data = await searchRecipes(ingredients, 12);
-
       if (!data || data.length === 0) {
         setSearchStatus("No recipes found. Try different ingredients.");
         return;

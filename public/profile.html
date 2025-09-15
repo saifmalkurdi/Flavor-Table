@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flavor Table — Profile</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="module" src="./profile-page.js" defer></script>
+    <script type="module" src="./auth.js"></script>
+  </head>
+  <body>
+    <header id="main-header">
+      <nav id="navbar">
+        <h1 id="brand">Flavor Table</h1>
+        <ul id="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="./auth.html">Auth</a></li>
+          <li><a href="./profile.html">Profile</a></li>
+          <li><a href="./favorites.html">Favorites</a></li>
+          <li><a href="./randomRecipes.html">Random Page</a></li>
+        </ul>
+      </nav>
+      <div id="hero">
+        <h2>Your Profile</h2>
+        <p>Manage your account information.</p>
+      </div>
+    </header>
+
+    <main id="content">
+      <p id="needLogin" hidden>
+        ⚠️ You must log in first on the <a href="./auth.html">Auth</a> page.
+      </p>
+
+      <section id="profileWrap" hidden class="auth-flex">
+        <form id="profileForm" class="card">
+          <h4>Profile</h4>
+          <label> Username <input name="username" required /> </label>
+          <label> Email <input name="email" type="email" required /> </label>
+          <p class="muted">Created: <span id="createdAt">—</span></p>
+          <button type="submit">Save Profile</button>
+        </form>
+
+        <form id="pwdForm" class="card">
+          <h4>Change Password</h4>
+          <label>
+            Current Password
+            <input name="currentPassword" type="password" required />
+          </label>
+          <label>
+            New Password <input name="newPassword" type="password" required />
+          </label>
+          <button type="submit">Update Password</button>
+        </form>
+      </section>
+    </main>
+
+    <footer id="footer">
+      <div id="footer-content">
+        <p>
+          <strong>Flavor Table</strong> – Your recipe finder powered by
+          Spoonacular API.
+        </p>
+        <p>Made with ❤️ by Saif Al Kurdi, 2025.</p>
+      </div>
+    </footer>
+  </body>
+</html>

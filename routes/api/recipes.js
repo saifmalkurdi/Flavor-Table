@@ -1,4 +1,5 @@
 const express = require("express");
+const verifyToken = require("../../middleware/verifyToken");
 const router = express.Router();
 
 /* =========================
@@ -8,8 +9,7 @@ router.get("/", async (req, res, next) => {
   const { db } = req.app.locals;
   try {
     const { rows } = await db.query(
-      `SELECT id, title, image, instructions, ingredients,
-              readyin AS "readyIn"
+      `SELECT id, title, image, instructions, ingredients, readyin AS "readyIn"
        FROM recipes
        ORDER BY id DESC;`
     );
@@ -22,7 +22,7 @@ router.get("/", async (req, res, next) => {
 /* =========================
    POST /api/recipes
    ========================= */
-router.post("/", async (req, res, next) => {
+router.post("/", verifyToken, async (req, res, next) => {
   const { db } = req.app.locals;
   try {
     const { title, image, instructions } = req.body;
@@ -42,7 +42,7 @@ router.post("/", async (req, res, next) => {
 
     const { rows } = await db.query(
       `INSERT INTO recipes (title, image, instructions, ingredients, readyin)
-       VALUES ($1, $2, $3, $4::jsonb, $5)
+       VALUES ($1,$2,$3,$4::jsonb,$5)
        RETURNING id, title, image, instructions, ingredients, readyin AS "readyIn";`,
       [
         cleanTitle,
@@ -55,7 +55,7 @@ router.post("/", async (req, res, next) => {
 
     res.status(201).json(rows[0]);
   } catch (err) {
-    if (err && err.code === "23505") {
+    if (err?.code === "23505") {
       return res.status(409).json({
         status: "fail",
         message: "This recipe is already in your favorites.",
@@ -68,11 +68,10 @@ router.post("/", async (req, res, next) => {
 /* =========================
    PUT /api/recipes/:id
    ========================= */
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", verifyToken, async (req, res, next) => {
   const { db } = req.app.locals;
   try {
     const { id } = req.params;
-
     const { title, image, instructions } = req.body;
     const incomingIngredients = req.body.ingredients;
     const readyIn = req.body.readyIn ?? req.body.readyin ?? null;
@@ -90,11 +89,7 @@ router.put("/:id", async (req, res, next) => {
 
     const { rows } = await db.query(
       `UPDATE recipes
-         SET title=$1,
-             image=$2,
-             instructions=$3,
-             ingredients=$4::jsonb,
-             readyin=$5
+         SET title=$1, image=$2, instructions=$3, ingredients=$4::jsonb, readyin=$5
        WHERE id=$6
        RETURNING id, title, image, instructions, ingredients, readyin AS "readyIn";`,
       [
@@ -115,7 +110,7 @@ router.put("/:id", async (req, res, next) => {
 
     res.json(rows[0]);
   } catch (err) {
-    if (err && err.code === "23505") {
+    if (err?.code === "23505") {
       return res.status(409).json({
         status: "fail",
         message: "Another favorite with this title already exists.",
@@ -128,7 +123,7 @@ router.put("/:id", async (req, res, next) => {
 /* =========================
    DELETE /api/recipes/:id
    ========================= */
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", verifyToken, async (req, res, next) => {
   const { db } = req.app.locals;
   try {
     const { id } = req.params;

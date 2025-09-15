@@ -17,10 +17,7 @@ router.get("/", async (_req, res, next) => {
 
     // get random recipe
     const { data } = await axios.get(`${BASE_URL}/recipes/random`, {
-      params: {
-        apiKey: API_KEY,
-        number: 1,
-      },
+      params: { apiKey: API_KEY, number: 1 },
     });
 
     // return recipe
@@ -39,7 +36,7 @@ router.get("/", async (_req, res, next) => {
       "";
 
     const ingredients = (recipe?.extendedIngredients || [])
-      ?.map((i) => i.original || i.name)
+      .map((i) => i.original || i.name)
       .filter(Boolean);
 
     res.json({
@@ -48,6 +45,7 @@ router.get("/", async (_req, res, next) => {
       image: recipe.image,
       instructions,
       ingredients,
+      readyInMinutes: recipe.readyInMinutes ?? null,
     });
 
     // catch errors
