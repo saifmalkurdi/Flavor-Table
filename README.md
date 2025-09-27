@@ -14,6 +14,12 @@ The backend proxies the Spoonacular API so your key stays private, and includes 
 
 ---
 
+## Live Demo :
+
+URL => https://flavor-table-vkkz.onrender.com
+
+---
+
 ## Project Structure
 
 ```
